@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Waste Monitoring System | AI & GPS Waste Management Platform</title>
+  <meta name="description" content="Next-gen municipal cleanliness platform powered by satellite GPS, AI computer vision, and proximity sanitation squad dispatch.">
+  <link rel="icon" type="image/svg+xml" href="smart-waste-logo.svg">
+  
+  <!-- Google Fonts & Leaflet Map CSS -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- 1. Real-time Municipal Telemetry Ticker -->
+  <div class="telemetry-ticker">
+    <div class="telemetry-live">
+      <div class="ping-dot"></div>
+      <span class="mono" style="color: #fff; font-weight: 800;">MUNICIPAL TELEMETRY ACTIVE</span>
+      <span style="opacity: 0.5;">&bull;</span>
+      <span>GPS Constellation: 14 Satellites Connected</span>
+    </div>
+    <div style="display: flex; gap: 20px;">
+      <span style="color: var(--emerald-400);">⚡ AI Vision v4.2 Pro Online</span>
+      <span>📍 Geolocation: &plusmn;4m Precision</span>
+      <span style="color: var(--teal-400); font-weight: bold;">📊 City Cleanliness: 94.8%</span>
+    </div>
+  </div>
+
+  <!-- 2. Top Navigation Bar -->
+  <header class="amz-nav-top">
+    <!-- Brand Logo with Smart Waste Monitoring System -->
+    <a class="amz-logo-box" onclick="Router.navigate('home')">
+      <img src="smart-waste-logo.svg" alt="Smart Waste Monitoring System" style="width: 34px; height: 34px; border-radius: 8px; margin-right: 8px; box-shadow: 0 2px 8px rgba(5,150,105,0.3);" />
+      <div class="amz-logo-text" style="font-size: 1.15rem; font-weight: 900; letter-spacing: -0.5px;">
+        Smart<span class="eco-accent" style="color: #10b981;">Waste</span>
+      </div>
+      <span class="amz-logo-sub" style="font-size: 0.7rem; color: #94a3b8; font-weight: 600;">Monitoring</span>
+    </a>
+
+    <!-- Delivery / Ward Location Selector -->
+    <button class="amz-location-btn" onclick="openLocationModal()" id="amz-location-display">
+      <span style="font-size: 1.25rem; color: #febd69;">📍</span>
+      <div>
+        <div class="amz-loc-line1" id="loc-deliver-to">Deliver to Aarav</div>
+        <div class="amz-loc-line2" id="loc-ward-text">Mumbai 400001 &bull; Ward 7 ▾</div>
+      </div>
+    </button>
+
+    <!-- Global Amazon Search Bar -->
+    <div class="amz-search-bar">
+      <select class="amz-search-dept" id="amz-search-dept">
+        <option value="all">All Departments</option>
+        <option value="dust">🌪️ Roadside Dust</option>
+        <option value="plastic">🧴 Plastic Waste</option>
+        <option value="organic">🍃 Organic Garbage</option>
+        <option value="ewaste">💻 E-Waste / Batteries</option>
+        <option value="rewards">🏆 Green Rewards Store</option>
+      </select>
+      <input 
+        type="text" 
+        class="amz-search-input" 
+        id="amz-search-input" 
+        placeholder="Search city wards, waste types, active complaints, recycling depots, or civic tools..."
+        onkeyup="handleAmazonSearch(event)"
+      />
+      <button class="amz-search-submit" onclick="executeAmazonSearch()" title="Search">
+        🔍
+      </button>
+    </div>
+
+    <!-- Right Header Actions -->
+    <div class="amz-nav-actions">
+      <!-- Language -->
+      <div class="amz-action-btn" style="flex-direction: row; gap: 4px; align-items: center;">
+        <span style="font-size: 1.1rem;">🇮🇳</span>
+        <span class="amz-action-main" style="font-size: 0.8rem;">EN ▾</span>
+      </div>
+
+      <!-- Account & Lists (Role switcher / profile) -->
+      <div class="amz-action-btn" id="amz-account-btn" onclick="toggleAccountMenu()">
+        <span class="amz-action-sub" id="amz-greeting">Hello, Aarav Sharma</span>
+        <span class="amz-action-main" id="amz-role-sub">Account &amp; Roles ▾</span>
+      </div>
+
+      <!-- Returns & Orders / Active Complaints -->
+      <div class="amz-action-btn" onclick="Router.navigate('citizen-complaints')">
+        <span class="amz-action-sub">Track</span>
+        <span class="amz-action-main">&amp; Complaints (<span id="amz-complaint-count" style="color: #febd69;">3</span>)</span>
+      </div>
+
+      <!-- Cart / Green Coin Points Basket -->
+      <div class="amz-cart-btn" onclick="openRewardsModal()" title="Green Points Wallet">
+        <div class="amz-cart-icon-wrap">
+          🛒
+          <span class="amz-cart-badge" id="amz-cart-badge">450</span>
+        </div>
+        <div style="display: flex; flex-direction: column;">
+          <span style="font-size: 0.68rem; color: #ccc;">Coins</span>
+          <span style="font-size: 0.82rem; font-weight: 800; color: #febd69;">Wallet</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- 3. Amazon Secondary Sub-Navigation Strip -->
+  <nav class="amz-subnav">
+    <div class="amz-subnav-links">
+      <button class="amz-subnav-item" onclick="toggleDrawer(true)">
+        <span style="font-size: 1.1rem;">☰</span> <b>All</b>
+      </button>
+      <button class="amz-subnav-item highlight" onclick="Router.navigate('citizen-report')">
+        ⚡ <b>Report Waste (AI Camera)</b>
+      </button>
+      <button class="amz-subnav-item" onclick="Router.navigate('admin-map')">
+        📍 Live Ward Map
+      </button>
+      <button class="amz-subnav-item" onclick="scrollToSection('amz-deals-section')">
+        🏆 Today's Green Deals
+      </button>
+      <button class="amz-subnav-item" onclick="Router.navigate('worker-tasks')">
+        👷 Worker Squad Hub
+      </button>
+      <button class="amz-subnav-item" onclick="Router.navigate('admin-dashboard')">
+        🛡️ Admin Command Center
+      </button>
+      <button class="amz-subnav-item" onclick="scrollToSection('amz-categories-section')">
+        📦 Waste Streams
+      </button>
+      <button class="amz-subnav-item" onclick="Router.navigate('citizen-dashboard')">
+        📊 Cleanliness Leaderboard
+      </button>
+    </div>
+    <div class="amz-subnav-prime">
+      <span>✨ <b>Prime Civic</b></span>
+      <span style="opacity: 0.6;">|</span>
+      <span>Guaranteed 45-Min Resolution</span>
+    </div>
+  </nav>
+
+  <!-- Amazon Slide Drawer Menu (All) -->
+  <div class="amz-drawer-backdrop" id="amz-drawer" onclick="if(event.target === this) toggleDrawer(false)">
+    <div class="amz-drawer-panel">
+      <div class="amz-drawer-header">
+        <span style="font-size: 1.6rem;">👤</span>
+        <div>
+          <div style="font-size: 1rem;" id="drawer-user-name">Hello, Aarav Sharma</div>
+          <div style="font-size: 0.75rem; color: #febd69; font-weight: 600;" id="drawer-user-role">Role: Citizen (Active)</div>
+        </div>
+      </div>
+      <div class="amz-drawer-body">
+        <div class="amz-drawer-group-title">Civic Services &amp; Actions</div>
+        <a class="amz-drawer-link" onclick="toggleDrawer(false); Router.navigate('citizen-report')">
+          <span>📸 Snap Waste with AI Camera</span> <span>&rarr;</span>
+        </a>
+        <a class="amz-drawer-link" onclick="toggleDrawer(false); Router.navigate('citizen-complaints')">
+          <span>📋 My Active Complaints</span> <span>&rarr;</span>
+        </a>
+        <a class="amz-drawer-link" onclick="toggleDrawer(false); Router.navigate('citizen-track')">
+          <span>⏱️ Real-time Cleanup Timeline</span> <span>&rarr;</span>
+        </a>
+        <a class="amz-drawer-link" onclick="toggleDrawer(false); Router.navigate('admin-map')">
+          <span>🗺️ Citywide OpenStreetMap Radar</span> <span>&rarr;</span>
+        </a>
+
+        <div class="amz-drawer-group-title" style="margin-top: 14px;">Switch Persona Portal</div>
+        <a class="amz-drawer-link" onclick="toggleDrawer(false); loginAs('citizen')">
+          <span>👤 Citizen Portal (Aarav)</span> <span style="color: #60a5fa;">Enter</span>
+        </a>
+        <a class="amz-drawer-link" onclick="toggleDrawer(false); loginAs('worker')">
+          <span>👷 Sanitation Worker (Rajesh)</span> <span style="color: #fbbf24;">Enter</span>
+        </a>
+        <a class="amz-drawer-link" onclick="toggleDrawer(false); loginAs('admin')">
+          <span>🛡️ Municipal Admin (Dr. Priya)</span> <span style="color: #34d399;">Enter</span>
+        </a>
+
+        <div class="amz-drawer-group-title" style="margin-top: 14px;">Programs &amp; Features</div>
+        <a class="amz-drawer-link" onclick="toggleDrawer(false); openRewardsModal()">
+          <span>🌱 Green Coins Rewards Store</span> <span>450 Pts</span>
+        </a>
+        <a class="amz-drawer-link" onclick="toggleDrawer(false); scrollToSection('amz-products-section')">
+          <span>🛒 Civic Shop &amp; Dustbins</span> <span>Sale</span>
+        </a>
+        <a class="amz-drawer-link" onclick="toggleDrawer(false); logout()">
+          <span style="color: #f43f5e;">🚪 Sign Out &amp; Return to Gate</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Multi-Page Content Views Container -->
+  <main class="main-wrapper" style="padding: 0; max-width: 100%;">
+
+    <!-- =========================================================================
+         PAGE 1: AMAZON CONSUMER HOMEPAGE (#view-home)
+         ========================================================================= -->
+    <section id="view-home" class="page-view active">
+      
+      <!-- 🔐 STEP 1: LOGIN PROCEDURE GATE (When unauthenticated) -->
+      <div id="home-login-gate" class="login-gate-box" style="margin: 20px auto; max-width: 1000px;">
+        <span class="badge-tag">🔐 STEP 1: LOGIN PROCEDURE &bull; SELECT YOUR ROLE</span>
+        <h2 style="font-size: 2rem; margin: 10px 0;">Sign In to Your Civic Account</h2>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; max-width: 500px; margin: 0 auto 24px;">
+          Select your persona below to unlock personalized reporting, proximity worker routing, and municipal command tools.
+        </p>
+
+        <!-- 3 Quick 1-Click Demo Login Cards -->
+        <div class="quick-demo-row">
+          <div class="demo-card citizen" onclick="loginAs('citizen')">
+            <span class="badge-tag" style="background: rgba(59, 130, 246, 0.2); color: #93c5fd; border-color: rgba(59, 130, 246, 0.4);">👤 CITIZEN</span>
+            <h3 style="font-size: 1.15rem; margin-top: 4px;">Aarav Sharma</h3>
+            <p class="mono" style="font-size: 0.75rem; color: var(--text-secondary);">citizen@urban.eco</p>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin: 10px 0 16px;">
+              Snap roadside dust or dumping with camera, auto-fetch GPS, hear waste voice readout, and track cleanups.
+            </p>
+            <button class="btn-primary" style="padding: 10px 16px; font-size: 0.8rem; background: #febd69; color: #111; font-weight: 800;">
+              👤 Login as Citizen &rarr;
+            </button>
+          </div>
+
+          <div class="demo-card worker" onclick="loginAs('worker')">
+            <span class="badge-tag" style="background: rgba(245, 158, 11, 0.2); color: #fde68a; border-color: rgba(245, 158, 11, 0.4);">👷 SANITATION CREW</span>
+            <h3 style="font-size: 1.15rem; margin-top: 4px;">Rajesh Kumar</h3>
+            <p class="mono" style="font-size: 0.75rem; color: var(--text-secondary);">worker@urban.eco</p>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin: 10px 0 16px;">
+              Receive proximity worker dispatches, follow turn GPS routing, and upload photographic Before/After proofs.
+            </p>
+            <button class="btn-primary" style="padding: 10px 16px; font-size: 0.8rem; background: #febd69; color: #111; font-weight: 800;">
+              👷 Login as Worker &rarr;
+            </button>
+          </div>
+
+          <div class="demo-card admin" onclick="loginAs('admin')">
+            <span class="badge-tag">🛡️ MUNICIPAL ADMIN</span>
+            <h3 style="font-size: 1.15rem; margin-top: 4px;">Dr. Priya Verma</h3>
+            <p class="mono" style="font-size: 0.75rem; color: var(--text-secondary);">admin@urban.eco &bull; PIN: 2026</p>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin: 10px 0 16px;">
+              Citywide command center. Live OpenStreetMap, AI review, nearest worker Haversine dispatching, and audit logs.
+            </p>
+            <button class="btn-primary" style="padding: 10px 16px; font-size: 0.8rem; background: #febd69; color: #111; font-weight: 800;">
+              🛡️ Login as Admin &rarr;
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 🟢 ACTIVE VERIFIED SESSION BANNER (When authenticated) -->
+      <div id="home-session-banner" class="glass-panel glass-panel-glow" style="display: none; margin: 16px auto 24px; max-width: 1440px; padding: 16px 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+          <div style="display: flex; align-items: center; gap: 14px;">
+            <div style="font-size: 2rem;">🟢</div>
+            <div>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <h3 style="font-size: 1.25rem;" id="session-user-name">Aarav Sharma</h3>
+                <span class="badge-tag" id="session-user-role" style="margin-bottom: 0;">CITIZEN ACTIVE</span>
+                <span style="font-size: 0.78rem; background: #febd69; color: #111; font-weight: 800; padding: 2px 8px; border-radius: 4px;">🌱 450 Green Coins</span>
+              </div>
+              <p class="mono" style="font-size: 0.8rem; color: var(--text-secondary);" id="session-user-email">citizen@urban.eco &bull; Ward 07, Mumbai</p>
+            </div>
+          </div>
+          <div style="display: flex; gap: 10px;">
+            <button class="btn-primary" style="background: #febd69; color: #111; font-weight: 800;" onclick="Router.navigate('citizen-report')">📸 Report Waste with Photo</button>
+            <button class="btn-logout" onclick="logout()">Sign Out</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- =====================================================================
+           AMAZON HERO CAROUSEL BANNER (With Signature Gradient Fade)
+           ===================================================================== -->
+      <div class="amz-hero-wrapper">
+        <div class="amz-hero-slider" id="amz-hero-slider">
+          <!-- Slide 1: AI Camera Waste Snap -->
+          <div class="amz-hero-slide active" style="background-image: linear-gradient(to right, rgba(19, 25, 33, 0.92) 30%, rgba(19, 25, 33, 0.4) 100%), url('https://images.unsplash.com/photo-1599818816933-4f9d0c8d17b5?auto=format&fit=crop&w=1600&q=80');">
+            <div class="amz-hero-banner-content">
+              <span class="amz-hero-badge">⚡ CIVIC CLEANLINESS FESTIVAL 2026</span>
+              <h1 class="amz-hero-heading">
+                Snap Roadside Dust &amp; Waste.<br />
+                <span style="color: #febd69;">AI Detects. Worker Dispatched.</span>
+              </h1>
+              <p class="amz-hero-desc">
+                Photograph illegal roadside dumping with your smartphone. AI auto-detects waste classification, GPS locks exact location, and the nearest municipal worker is assigned in under 45 minutes. Earn 50 Green Coins per verified snap!
+              </p>
+              <button class="amz-hero-cta-btn" onclick="Router.navigate('citizen-report')">
+                📸 Open AI Waste Camera &rarr;
+              </button>
+            </div>
+          </div>
+
+          <!-- Slide 2: Green Rewards Store -->
+          <div class="amz-hero-slide" style="background-image: linear-gradient(to right, rgba(19, 25, 33, 0.92) 30%, rgba(19, 25, 33, 0.4) 100%), url('https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=1600&q=80');">
+            <div class="amz-hero-banner-content">
+              <span class="amz-hero-badge">🌱 GREEN REWARDS STORE</span>
+              <h1 class="amz-hero-heading">
+                Trade Waste Points for Metro Passes &amp; <br />
+                <span style="color: #febd69;">Municipal Tax Rebates!</span>
+              </h1>
+              <p class="amz-hero-desc">
+                Over 14,000 citizens have redeemed eco-coins for public transit passes, 25% off organic grocery baskets, and property tax discounts. Keep your ward clean and get paid in civic perks.
+              </p>
+              <button class="amz-hero-cta-btn" onclick="openRewardsModal()">
+                🎁 Browse Green Deals &rarr;
+              </button>
+            </div>
+          </div>
+
+          <!-- Slide 3: Smart Fleet Radar -->
+          <div class="amz-hero-slide" style="background-image: linear-gradient(to right, rgba(19, 25, 33, 0.92) 30%, rgba(19, 25, 33, 0.4) 100%), url('https://images.unsplash.com/photo-1605600659908-0ef719419d41?auto=format&fit=crop&w=1600&q=80');">
+            <div class="amz-hero-banner-content">
+              <span class="amz-hero-badge">🗺️ REAL-TIME SATELLITE FLEET</span>
+              <h1 class="amz-hero-heading">
+                1,420 Sanitation Squads <br />
+                <span style="color: #febd69;">On Live GPS Radar</span>
+              </h1>
+              <p class="amz-hero-desc">
+                Municipal officers and ward leaders monitor real-time road sweeping squads, compactor trucks, and waste hotspot telemetry. Haversine distance engine dispatches the closest crew automatically.
+              </p>
+              <button class="amz-hero-cta-btn" onclick="Router.navigate('admin-map')">
+                🗺️ Open City GPS Radar &rarr;
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Carousel Navigation Arrows -->
+        <button class="amz-carousel-arrow left" onclick="prevHeroSlide()">‹</button>
+        <button class="amz-carousel-arrow right" onclick="nextHeroSlide()">›</button>
+
+        <!-- Bottom Gradient Fade into Content -->
+        <div class="amz-hero-fade"></div>
+      </div>
+
+      <!-- =====================================================================
+           AMAZON 4-CARD MULTI-GRID OVERLAID ON HERO
+           ===================================================================== -->
+      <div class="amz-cards-container">
+        <div class="amz-cards-grid">
+          
+          <!-- Box 1: Quick Waste Report • AI Snap -->
+          <div class="amz-card">
+            <div>
+              <h3 class="amz-card-title">Quick Waste Report • AI Snap</h3>
+              <div class="amz-card-quadrant">
+                <div class="amz-quad-item" onclick="Router.navigate('citizen-report')">
+                  <img class="amz-quad-img" src="https://images.unsplash.com/photo-1599818816933-4f9d0c8d17b5?auto=format&fit=crop&w=300&q=80" alt="Snap Dust">
+                  <span class="amz-quad-label">📸 Snap Road Dust</span>
+                </div>
+                <div class="amz-quad-item" onclick="Router.navigate('citizen-report')">
+                  <img class="amz-quad-img" src="https://images.unsplash.com/photo-1524813686514-a57563d77d66?auto=format&fit=crop&w=300&q=80" alt="Lock GPS">
+                  <span class="amz-quad-label">📍 Lock GPS &plusmn;4m</span>
+                </div>
+                <div class="amz-quad-item" onclick="Router.navigate('citizen-report')">
+                  <img class="amz-quad-img" src="https://images.unsplash.com/photo-1605600659908-0ef719419d41?auto=format&fit=crop&w=300&q=80" alt="AI Classification">
+                  <span class="amz-quad-label">🤖 AI Voice Readout</span>
+                </div>
+                <div class="amz-quad-item" onclick="Router.navigate('citizen-track')">
+                  <img class="amz-quad-img" src="https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=300&q=80" alt="Auto Dispatch">
+                  <span class="amz-quad-label">⚡ Nearest Squad</span>
+                </div>
+              </div>
+            </div>
+            <a class="amz-card-link" onclick="Router.navigate('citizen-report')">Start waste complaint now &rarr;</a>
+          </div>
+
+          <!-- Box 2: Live Ward Cleanliness Radar -->
+          <div class="amz-card">
+            <div>
+              <h3 class="amz-card-title">Live Ward Cleanliness Radar</h3>
+              <div class="amz-card-quadrant">
+                <div class="amz-quad-item" onclick="Router.navigate('admin-map')">
+                  <div style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 6px; padding: 14px 10px; height: 98px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+                    <span style="font-size: 1.5rem;">🟢</span>
+                    <span style="font-size: 0.8rem; font-weight: 800; color: #86efac; margin-top: 4px;">Ward 07 Bandra</span>
+                    <span style="font-size: 0.68rem; color: #ccc;">98% Clean</span>
+                  </div>
+                  <span class="amz-quad-label">Top Clean Ward</span>
+                </div>
+                <div class="amz-quad-item" onclick="Router.navigate('admin-map')">
+                  <div style="background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 6px; padding: 14px 10px; height: 98px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+                    <span style="font-size: 1.5rem;">🟡</span>
+                    <span style="font-size: 0.8rem; font-weight: 800; color: #fde68a; margin-top: 4px;">Ward 12 Andheri</span>
+                    <span style="font-size: 0.68rem; color: #ccc;">Squad En Route</span>
+                  </div>
+                  <span class="amz-quad-label">Active Sweeping</span>
+                </div>
+                <div class="amz-quad-item" onclick="Router.navigate('admin-map')">
+                  <div style="background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244, 63, 94, 0.3); border-radius: 6px; padding: 14px 10px; height: 98px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+                    <span style="font-size: 1.5rem;">🔴</span>
+                    <span style="font-size: 0.8rem; font-weight: 800; color: #fda4af; margin-top: 4px;">Central Market</span>
+                    <span style="font-size: 0.68rem; color: #ccc;">High Priority</span>
+                  </div>
+                  <span class="amz-quad-label">Action Dispatched</span>
+                </div>
+                <div class="amz-quad-item" onclick="Router.navigate('admin-map')">
+                  <div style="background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 6px; padding: 14px 10px; height: 98px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+                    <span style="font-size: 1.5rem;">🔵</span>
+                    <span style="font-size: 0.8rem; font-weight: 800; color: #93c5fd; margin-top: 4px;">Ward 01 Colaba</span>
+                    <span style="font-size: 0.68rem; color: #ccc;">Zero Litter Pass</span>
+                  </div>
+                  <span class="amz-quad-label">All Clear</span>
+                </div>
+              </div>
+            </div>
+            <a class="amz-card-link" onclick="Router.navigate('admin-map')">View interactive city GPS map &rarr;</a>
+          </div>
+
+          <!-- Box 3: Green Rewards Store • Civic Deals -->
+          <div class="amz-card">
+            <div>
+              <h3 class="amz-card-title">Green Rewards • Civic Deals</h3>
+              <div class="amz-card-quadrant">
+                <div class="amz-quad-item" onclick="claimReward('City Metro 30-Day Pass', 150)">
+                  <div style="background: #0f172a; border-radius: 6px; padding: 12px; height: 98px; text-align: center; border: 1px solid rgba(255,255,255,0.08);">
+                    <span style="font-size: 1.6rem;">🎫</span>
+                    <div style="font-size: 0.75rem; font-weight: 800; color: #fff; margin-top: 2px;">Metro Pass</div>
+                    <span style="font-size: 0.68rem; color: #febd69; font-weight: 800;">150 Coins</span>
+                  </div>
+                  <span class="amz-quad-label">Redeem Instantly</span>
+                </div>
+                <div class="amz-quad-item" onclick="claimReward('Organic Farm Market Basket 25% Off', 80)">
+                  <div style="background: #0f172a; border-radius: 6px; padding: 12px; height: 98px; text-align: center; border: 1px solid rgba(255,255,255,0.08);">
+                    <span style="font-size: 1.6rem;">🥦</span>
+                    <div style="font-size: 0.75rem; font-weight: 800; color: #fff; margin-top: 2px;">Veggie Voucher</div>
+                    <span style="font-size: 0.68rem; color: #febd69; font-weight: 800;">80 Coins</span>
+                  </div>
+                  <span class="amz-quad-label">25% Discount</span>
+                </div>
+                <div class="amz-quad-item" onclick="claimReward('Water Bill Municipal Rebate', 300)">
+                  <div style="background: #0f172a; border-radius: 6px; padding: 12px; height: 98px; text-align: center; border: 1px solid rgba(255,255,255,0.08);">
+                    <span style="font-size: 1.6rem;">💧</span>
+                    <div style="font-size: 0.75rem; font-weight: 800; color: #fff; margin-top: 2px;">Water Tax Cut</div>
+                    <span style="font-size: 0.68rem; color: #febd69; font-weight: 800;">300 Coins</span>
+                  </div>
+                  <span class="amz-quad-label">15% Bill Rebate</span>
+                </div>
+                <div class="amz-quad-item" onclick="claimReward('Adopt a Roadside Tree Certificate', 50)">
+                  <div style="background: #0f172a; border-radius: 6px; padding: 12px; height: 98px; text-align: center; border: 1px solid rgba(255,255,255,0.08);">
+                    <span style="font-size: 1.6rem;">🌳</span>
+                    <div style="font-size: 0.75rem; font-weight: 800; color: #fff; margin-top: 2px;">Adopt a Tree</div>
+                    <span style="font-size: 0.68rem; color: #febd69; font-weight: 800;">50 Coins</span>
+                  </div>
+                  <span class="amz-quad-label">Civic Honor</span>
+                </div>
+              </div>
+            </div>
+            <a class="amz-card-link" onclick="openRewardsModal()">Browse all 18 civic deals &rarr;</a>
+          </div>
+
+          <!-- Box 4: Your Civic Account & Role Access -->
+          <div class="amz-card">
+            <div>
+              <h3 class="amz-card-title">Select Persona Portal</h3>
+              <p style="font-size: 0.78rem; color: #94a3b8; margin-bottom: 12px;">
+                Instant 1-click access to specialized operational dashboards:
+              </p>
+              <div style="display: flex; flex-direction: column; gap: 10px;">
+                <button onclick="loginAs('citizen')" style="background: #0f172a; border: 1px solid rgba(59, 130, 246, 0.4); padding: 10px 14px; border-radius: 6px; color: #fff; display: flex; align-items: center; justify-content: space-between; cursor: pointer; text-align: left;">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 1.2rem;">👤</span>
+                    <div>
+                      <div style="font-size: 0.82rem; font-weight: 800;">Citizen Portal</div>
+                      <div style="font-size: 0.68rem; color: #93c5fd;">Aarav Sharma &bull; Report &amp; Track</div>
+                    </div>
+                  </div>
+                  <span style="color: #60a5fa; font-weight: 800;">&rarr;</span>
+                </button>
+
+                <button onclick="loginAs('worker')" style="background: #0f172a; border: 1px solid rgba(245, 158, 11, 0.4); padding: 10px 14px; border-radius: 6px; color: #fff; display: flex; align-items: center; justify-content: space-between; cursor: pointer; text-align: left;">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 1.2rem;">👷</span>
+                    <div>
+                      <div style="font-size: 0.82rem; font-weight: 800;">Sanitation Squad</div>
+                      <div style="font-size: 0.68rem; color: #fde68a;">Rajesh Kumar &bull; Dispatches &amp; Proofs</div>
+                    </div>
+                  </div>
+                  <span style="color: #fbbf24; font-weight: 800;">&rarr;</span>
+                </button>
+
+                <button onclick="loginAs('admin')" style="background: #0f172a; border: 1px solid rgba(16, 185, 129, 0.4); padding: 10px 14px; border-radius: 6px; color: #fff; display: flex; align-items: center; justify-content: space-between; cursor: pointer; text-align: left;">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 1.2rem;">🛡️</span>
+                    <div>
+                      <div style="font-size: 0.82rem; font-weight: 800;">Municipal Admin</div>
+                      <div style="font-size: 0.68rem; color: #86efac;">Dr. Priya Verma &bull; City Radar &amp; AI</div>
+                    </div>
+                  </div>
+                  <span style="color: #34d399; font-weight: 800;">&rarr;</span>
+                </button>
+              </div>
+            </div>
+            <a class="amz-card-link" onclick="toggleDrawer(true)">Open complete navigation drawer &rarr;</a>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- =====================================================================
+           HORIZONTAL DEALS RIBBON (Live Citizen Reports in Your Ward)
+           ===================================================================== -->
+      <section class="amz-ribbon-section" id="amz-deals-section">
+        <div class="amz-ribbon-box">
+          <div class="amz-ribbon-header">
+            <h2 class="amz-ribbon-title">
+              <span>⚡ Live Citizen Reports &amp; Squad Dispatches</span>
+              <span style="font-size: 0.78rem; background: #cc0c39; color: #fff; padding: 2px 8px; border-radius: 4px; font-weight: 800;">HOT DEALS IN CIVIC CARE</span>
+            </h2>
+            <a class="amz-card-link" onclick="Router.navigate('citizen-complaints')">See all complaints &rarr;</a>
+          </div>
+
+          <div class="amz-ribbon-scroll-wrap">
+            <div class="amz-ribbon-scroll" id="amz-complaint-ribbon">
+              
+              <!-- Complaint Deal Card 1 -->
+              <div class="amz-complaint-deal-card" onclick="Router.navigate('citizen-track')">
+                <span class="amz-deal-badge">🔥 SQUAD ASSIGNED 12M AGO</span>
+                <img class="amz-deal-thumb" src="https://images.unsplash.com/photo-1599818816933-4f9d0c8d17b5?auto=format&fit=crop&w=400&q=80" alt="Road Dust Debris">
+                <div class="amz-deal-title">Road Dust &amp; Sweeping Debris near MG Road Crossing</div>
+                <div class="amz-deal-stars">★★★★★ <span style="color: #ccc; font-size: 0.72rem;">(96.8% AI Match)</span></div>
+                <div class="amz-deal-meta">📍 42 MG Road &bull; 0.4 km away</div>
+                <button class="amz-deal-btn">Track Squad Live &rarr;</button>
+              </div>
+
+              <!-- Complaint Deal Card 2 -->
+              <div class="amz-complaint-deal-card" onclick="Router.navigate('citizen-track')">
+                <span class="amz-deal-badge" style="background: #007600;">✅ RESOLVED &amp; VERIFIED</span>
+                <img class="amz-deal-thumb" src="https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=400&q=80" alt="Organic Market Dump">
+                <div class="amz-deal-title">Perishable Organic Vegetable Market Waste Dump</div>
+                <div class="amz-deal-stars">★★★★★ <span style="color: #ccc; font-size: 0.72rem;">(100% Cleared)</span></div>
+                <div class="amz-deal-meta">📍 Vegetable Market &bull; Worker Sunita</div>
+                <button class="amz-deal-btn" style="background: #2dd4bf; color: #000;">View Before/After Proof</button>
+              </div>
+
+              <!-- Complaint Deal Card 3 -->
+              <div class="amz-complaint-deal-card" onclick="Router.navigate('citizen-track')">
+                <span class="amz-deal-badge">⚡ CREW EN ROUTE</span>
+                <img class="amz-deal-thumb" src="https://images.unsplash.com/photo-1605600659908-0ef719419d41?auto=format&fit=crop&w=400&q=80" alt="Plastic Bottles">
+                <div class="amz-deal-title">Overflowing Beverage Plastic Bottles &amp; Polymer Bale</div>
+                <div class="amz-deal-stars">★★★★☆ <span style="color: #ccc; font-size: 0.72rem;">(94.2% AI Match)</span></div>
+                <div class="amz-deal-meta">📍 15 Station Road &bull; Diverted to Baler</div>
+                <button class="amz-deal-btn">Track Status &rarr;</button>
+              </div>
+
+              <!-- Complaint Deal Card 4 -->
+              <div class="amz-complaint-deal-card" onclick="Router.navigate('citizen-track')">
+                <span class="amz-deal-badge" style="background: #b12704;">🚨 HIGH PRIORITY</span>
+                <img class="amz-deal-thumb" src="https://images.unsplash.com/photo-1524813686514-a57563d77d66?auto=format&fit=crop&w=400&q=80" alt="Industrial Scrap">
+                <div class="amz-deal-title">Discarded E-Waste Batteries &amp; Chemical Containers</div>
+                <div class="amz-deal-stars">★★★★★ <span style="color: #ccc; font-size: 0.72rem;">(99.1% Confidence)</span></div>
+                <div class="amz-deal-meta">📍 North Bypass &bull; Hazmat Unit</div>
+                <button class="amz-deal-btn">Inspect Report &rarr;</button>
+              </div>
+
+              <!-- Complaint Deal Card 5 -->
+              <div class="amz-complaint-deal-card" onclick="Router.navigate('citizen-report')">
+                <span class="amz-deal-badge" style="background: #007600;">🎁 50 COINS REWARD</span>
+                <img class="amz-deal-thumb" src="https://images.unsplash.com/photo-1599818816933-4f9d0c8d17b5?auto=format&fit=crop&w=400&q=80" alt="Report Waste">
+                <div class="amz-deal-title">Spot roadside trash on your street? Snap it with AI camera!</div>
+                <div class="amz-deal-stars">★★★★★ <span style="color: #ccc; font-size: 0.72rem;">(Earn 50 Points)</span></div>
+                <div class="amz-deal-meta">📍 Your Ward &bull; Instant Routing</div>
+                <button class="amz-deal-btn">Snap Photo Now &rarr;</button>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           SHOP BY CATEGORY / AI DETECTED WASTE STREAMS
+           ===================================================================== -->
+      <section class="amz-ribbon-section" id="amz-categories-section">
+        <div class="amz-ribbon-box">
+          <h2 class="amz-ribbon-title" style="margin-bottom: 18px;">
+            <span>📦 Detect &amp; Segregate by Waste Stream</span>
+            <span style="font-size: 0.78rem; color: #94a3b8; font-weight: normal;">Click category to snap or learn</span>
+          </h2>
+
+          <div class="amz-categories-strip">
+            <div class="amz-cat-item" onclick="triggerCategorySnap('Road Dust & Sweeping Debris')">
+              <div class="amz-cat-circle">🌪️</div>
+              <div class="amz-cat-title">Road Dust &amp; Silt</div>
+            </div>
+            <div class="amz-cat-item" onclick="triggerCategorySnap('Plastic Waste')">
+              <div class="amz-cat-circle">🧴</div>
+              <div class="amz-cat-title">Plastic Bottles</div>
+            </div>
+            <div class="amz-cat-item" onclick="triggerCategorySnap('Organic Waste')">
+              <div class="amz-cat-circle">🍃</div>
+              <div class="amz-cat-title">Wet Kitchen &amp; Food</div>
+            </div>
+            <div class="amz-cat-item" onclick="triggerCategorySnap('E-Waste')">
+              <div class="amz-cat-circle">💻</div>
+              <div class="amz-cat-title">E-Waste &amp; Batteries</div>
+            </div>
+            <div class="amz-cat-item" onclick="triggerCategorySnap('Construction Debris')">
+              <div class="amz-cat-circle">🧱</div>
+              <div class="amz-cat-title">Construction Silt</div>
+            </div>
+            <div class="amz-cat-item" onclick="triggerCategorySnap('Hazardous Waste')">
+              <div class="amz-cat-circle">☣️</div>
+              <div class="amz-cat-title">Hazardous Scrap</div>
+            </div>
+            <div class="amz-cat-item" onclick="triggerCategorySnap('Cardboard Baler')">
+              <div class="amz-cat-circle">📦</div>
+              <div class="amz-cat-title">Cardboard / Paper</div>
+            </div>
+            <div class="amz-cat-item" onclick="triggerCategorySnap('Metal Scrap')">
+              <div class="amz-cat-circle">🥫</div>
+              <div class="amz-cat-title">Metal Cans &amp; Scrap</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           FEATURED PRODUCTS & CLEANLINESS TOOLS (Amazon-style Product Grid)
+           ===================================================================== -->
+      <section class="amz-ribbon-section" id="amz-products-section">
+        <div class="amz-ribbon-box">
+          <div class="amz-ribbon-header">
+            <h2 class="amz-ribbon-title">
+              <span>🛒 Deals in Civic Cleanliness &amp; Home Segregation</span>
+              <span style="font-size: 0.78rem; background: #007600; color: #fff; padding: 2px 8px; border-radius: 4px; font-weight: 800;">SUBSIDIZED BY MUNICIPALITY</span>
+            </h2>
+            <span style="font-size: 0.8rem; color: #febd69;">Prime Civic Members get Free Delivery</span>
+          </div>
+
+          <div class="amz-products-grid">
+            
+            <!-- Product 1 -->
+            <div class="amz-product-card">
+              <img class="amz-prod-img" src="https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=500&q=80" alt="Dual Segregation Bins">
+              <div class="amz-prod-title">Smart Waste Dual-Compartment Segregation Bin (30L Dry + 30L Wet)</div>
+              <div class="amz-deal-stars">★★★★★ <span style="color: #94a3b8; font-size: 0.75rem;">(2,450)</span></div>
+              <div class="amz-prod-prime">prime civic</div>
+              <div class="amz-prod-price-row">
+                <span class="amz-prod-price">₹399</span>
+                <span class="amz-prod-mrp">₹999</span>
+                <span class="amz-prod-discount">60% off</span>
+              </div>
+              <button class="amz-add-cart-btn" onclick="addToCart('Dual Segregation Bin 60L', 399)">
+                🛒 Add to Cart
+              </button>
+            </div>
+
+            <!-- Product 2 -->
+            <div class="amz-product-card">
+              <img class="amz-prod-img" src="https://images.unsplash.com/photo-1618477461853-cf6ed80faba5?auto=format&fit=crop&w=500&q=80" alt="Biodegradable Bags">
+              <div class="amz-prod-title">100% Biodegradable Cornstarch Garbage Bags (Pack of 90 Bags)</div>
+              <div class="amz-deal-stars">★★★★★ <span style="color: #94a3b8; font-size: 0.75rem;">(980)</span></div>
+              <div class="amz-prod-prime">prime civic</div>
+              <div class="amz-prod-price-row">
+                <span class="amz-prod-price">₹149</span>
+                <span class="amz-prod-mrp">₹299</span>
+                <span class="amz-prod-discount">50% off</span>
+              </div>
+              <button class="amz-add-cart-btn" onclick="addToCart('Compostable Bags (90pk)', 149)">
+                🛒 Add to Cart
+              </button>
+            </div>
+
+            <!-- Product 3 -->
+            <div class="amz-product-card">
+              <img class="amz-prod-img" src="https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=500&q=80" alt="Bokashi Composter">
+              <div class="amz-prod-title">Indoor Kitchen Bokashi Composter Kit with Microbe Powder (50L)</div>
+              <div class="amz-deal-stars">★★★★☆ <span style="color: #94a3b8; font-size: 0.75rem;">(1,620)</span></div>
+              <div class="amz-prod-prime">prime civic</div>
+              <div class="amz-prod-price-row">
+                <span class="amz-prod-price">₹599</span>
+                <span class="amz-prod-mrp">₹1,499</span>
+                <span class="amz-prod-discount">60% off</span>
+              </div>
+              <button class="amz-add-cart-btn" onclick="addToCart('Kitchen Bokashi Composter', 599)">
+                🛒 Add to Cart
+              </button>
+            </div>
+
+            <!-- Product 4 -->
+            <div class="amz-product-card">
+              <img class="amz-prod-img" src="https://images.unsplash.com/photo-1524813686514-a57563d77d66?auto=format&fit=crop&w=500&q=80" alt="Litter Grabber Tool">
+              <div class="amz-prod-title">Ergonomic Long-Reach Litter Grabber &amp; Roadside Rubbish Claw</div>
+              <div class="amz-deal-stars">★★★★★ <span style="color: #94a3b8; font-size: 0.75rem;">(740)</span></div>
+              <div class="amz-prod-prime">prime civic</div>
+              <div class="amz-prod-price-row">
+                <span class="amz-prod-price">₹199</span>
+                <span class="amz-prod-mrp">₹450</span>
+                <span class="amz-prod-discount">56% off</span>
+              </div>
+              <button class="amz-add-cart-btn" onclick="addToCart('Ergonomic Litter Grabber', 199)">
+                🛒 Add to Cart
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           CUSTOMER REVIEWS & CITIZEN VOICE SECTION
+           ===================================================================== -->
+      <section class="amz-ribbon-section">
+        <div class="amz-ribbon-box">
+          <h2 class="amz-ribbon-title" style="margin-bottom: 16px;">
+            <span>⭐ Customer Reviews &amp; Citizen Testimonials</span>
+            <span style="font-size: 0.85rem; color: #ffa41c;">4.9 out of 5 stars (18,450 Verified Cleanups)</span>
+          </h2>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+            <div style="background: #0f172a; padding: 18px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);">
+              <div style="color: #ffa41c; margin-bottom: 6px;">★★★★★ <b style="color: #fff; font-size: 0.85rem;">Dust cleared in 32 minutes!</b></div>
+              <p style="font-size: 0.8rem; color: #cbd5e1; line-height: 1.4; margin-bottom: 10px;">
+                "I reported road dust outside my apartment on MG Road using the camera. The AI told me through voice that it was dry sweeping waste and assigned worker Ramesh Kumar. By 10 AM it was spotless!"
+              </p>
+              <div style="font-size: 0.72rem; color: #94a3b8;">
+                By <b>Aarav S.</b> &bull; <span style="color: #febd69;">Verified Citizen Reporter</span>
+              </div>
+            </div>
+
+            <div style="background: #0f172a; padding: 18px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);">
+              <div style="color: #ffa41c; margin-bottom: 6px;">★★★★★ <b style="color: #fff; font-size: 0.85rem;">Redeemed 300 coins for Metro pass</b></div>
+              <p style="font-size: 0.8rem; color: #cbd5e1; line-height: 1.4; margin-bottom: 10px;">
+                "Smart Waste Monitoring System has transformed our ward. We get rewarded for reporting trash and making sure our streets remain clean. The app feels just like Amazon with instant tracking and reward points."
+              </p>
+              <div style="font-size: 0.72rem; color: #94a3b8;">
+                By <b>Pooja Sharma</b> &bull; <span style="color: #febd69;">Verified Citizen Reporter</span>
+              </div>
+            </div>
+
+            <div style="background: #0f172a; padding: 18px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);">
+              <div style="color: #ffa41c; margin-bottom: 6px;">★★★★★ <b style="color: #fff; font-size: 0.85rem;">Sanitation worker app is effortless</b></div>
+              <p style="font-size: 0.8rem; color: #cbd5e1; line-height: 1.4; margin-bottom: 10px;">
+                "As a sanitation field worker, getting GPS coordinates and before-photos directly on my phone saves so much travel time. We upload after-photos in one tap."
+              </p>
+              <div style="font-size: 0.72rem; color: #94a3b8;">
+                By <b>Rajesh Kumar</b> &bull; <span style="color: #febd69;">Municipal Crew Lead</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           AMAZON 4-TIER FOOTER
+           ===================================================================== -->
+      <footer class="amz-footer">
+        <!-- Tier 1: Back to top -->
+        <div class="amz-back-to-top" onclick="window.scrollTo({ top: 0, behavior: 'smooth' })">
+          Back to top
+        </div>
+
+        <!-- Tier 2: 4-Column Directory Links -->
+        <div class="amz-footer-main">
+          <div class="amz-footer-col">
+            <h4>Get to Know Us</h4>
+            <ul>
+              <li><a onclick="Router.navigate('home')">About UrbanEco AI</a></li>
+              <li><a onclick="Router.navigate('admin-dashboard')">Municipal Mission</a></li>
+              <li><a onclick="Router.navigate('citizen-dashboard')">Clean Ward Reports</a></li>
+              <li><a onclick="Router.navigate('admin-map')">Satellite GPS Fleet</a></li>
+            </ul>
+          </div>
+          <div class="amz-footer-col">
+            <h4>Make a Civic Impact</h4>
+            <ul>
+              <li><a onclick="Router.navigate('citizen-report')">Report Road Waste</a></li>
+              <li><a onclick="loginAs('worker')">Join Sanitation Squad</a></li>
+              <li><a onclick="openRewardsModal()">Green Points Store</a></li>
+              <li><a onclick="scrollToSection('amz-products-section')">Segregation Dustbins</a></li>
+            </ul>
+          </div>
+          <div class="amz-footer-col">
+            <h4>UrbanEco Payment &amp; Coins</h4>
+            <ul>
+              <li><a onclick="openRewardsModal()">Green Coin Wallet</a></li>
+              <li><a onclick="openRewardsModal()">Municipal Tax Credit</a></li>
+              <li><a onclick="openRewardsModal()">City Metro Card Recharge</a></li>
+              <li><a onclick="openRewardsModal()">Corporate CSR Sponsorship</a></li>
+            </ul>
+          </div>
+          <div class="amz-footer-col">
+            <h4>Let Us Help You</h4>
+            <ul>
+              <li><a onclick="Router.navigate('citizen-complaints')">Track Your Complaints</a></li>
+              <li><a onclick="toggleDrawer(true)">Account &amp; Role Settings</a></li>
+              <li><a onclick="Router.navigate('citizen-track')">Grievance Redressal</a></li>
+              <li><a onclick="alert('Municipal 24x7 Helpline: Call 1916 (Toll-Free)')">Emergency Cleanliness Hotline (1916)</a></li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Tier 3: Brand & Country Selector -->
+        <div class="amz-footer-mid">
+          <div style="font-size: 1.3rem; font-weight: 900; color: #fff; display: flex; align-items: center; gap: 4px;">
+            <span>♻️</span> Urban<span style="color: #10b981;">Eco</span>.in
+          </div>
+          <div class="amz-footer-pill">
+            <span>🌐</span> English
+          </div>
+          <div class="amz-footer-pill">
+            <span>🇮🇳</span> India (Smart City Mission)
+          </div>
+          <div class="amz-footer-pill" onclick="openLocationModal()">
+            <span>📍</span> Mumbai Ward 07 (Active)
+          </div>
+        </div>
+
+        <!-- Tier 4: Legal & Copyright -->
+        <div class="amz-footer-bottom">
+          <div class="amz-footer-legal-links">
+            <a>Conditions of Use</a>
+            <a>Privacy Notice</a>
+            <a>Citizen Charter</a>
+            <a>Interest-Based Civic Alerts</a>
+          </div>
+          <p>&copy; 2026, UrbanEco Smart Waste Monitoring System. An Initiative under Digital India &amp; Swachh Bharat Smart City Mission.</p>
+        </div>
+      </footer>
+
+    </section>
+
+
+    <!-- =========================================================================
+         PAGE 2: CITIZEN REPORT WASTE WITH CAMERA & GPS (#view-citizen-report)
+         ========================================================================= -->
+    <section id="view-citizen-report" class="page-view">
+      <div class="glass-panel" style="max-width: 900px; margin: 0 auto;">
+        <span class="badge-tag">📸 SMART CAMERA &bull; GPS GEOLOCATION &bull; AI VISION</span>
+        <h2 style="font-size: 1.8rem; margin: 6px 0 10px;">Click Picture to Detect Waste &amp; Track Location</h2>
+        <p style="color: var(--text-secondary); font-size: 0.88rem; margin-bottom: 24px;">
+          Snap roadside dust or dumping with your device camera: satellite GPS coordinates lock automatically, and AI computer vision speaks aloud what kind of waste has been identified.
+        </p>
+
+        <!-- Camera & AI HUD Frame -->
+        <div class="camera-hud-box" style="height: 380px; position: relative;">
+          <!-- Video element for live stream -->
+          <video id="camera-stream-video" autoplay playsinline style="display: none; width: 100%; height: 100%; object-fit: cover;"></video>
+          <!-- Photo display -->
+          <img id="camera-placeholder-img" src="https://images.unsplash.com/photo-1599818816933-4f9d0c8d17b5?auto=format&fit=crop&w=800&q=80" alt="Waste Snap" style="width: 100%; height: 100%; object-fit: cover;">
+
+          <!-- Laser Scanner Bar -->
+          <div class="laser-scanner-bar"></div>
+
+          <!-- HUD Overlay Elements -->
+          <div class="hud-overlay">
+            <div style="display: flex; justify-content: space-between;">
+              <span class="badge-tag" style="background: rgba(0,0,0,0.8); border-color: var(--emerald-400);">📸 CITIZEN RETICLE ACTIVE</span>
+              <span class="mono" style="font-size: 0.75rem; background: rgba(0,0,0,0.8); padding: 4px 8px; border-radius: 6px;" id="gps-coords-display">19.0760° N, 72.8777° E</span>
+            </div>
+            
+            <div style="text-align: center;">
+              <div style="display: inline-block; width: 80px; height: 80px; border: 2px dashed var(--emerald-400); border-radius: 12px; margin-bottom: 6px;"></div>
+              <p class="mono" style="font-size: 0.75rem; color: var(--emerald-400); font-weight: bold;">[ AI VISION TARGET LOCK ]</p>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span class="mono" style="font-size: 0.75rem; color: #fff;" id="gps-status-text">📍 GPS Locked: &plusmn;4m Accuracy</span>
+              <button class="btn-primary" id="btn-start-camera" style="padding: 8px 16px; font-size: 0.75rem;">📹 Start Camera</button>
+              <button class="btn-primary" id="btn-snap-camera" style="display: none; padding: 8px 16px; font-size: 0.75rem; background: var(--rose-500); color: #fff;">📸 Snap Waste Photo</button>
+            </div>
+          </div>
+
+          <div class="hud-corner tl"></div>
+          <div class="hud-corner tr"></div>
+          <div class="hud-corner bl"></div>
+          <div class="hud-corner br"></div>
+        </div>
+
+        <!-- Sample Photo Presets (Quick Testing) -->
+        <div style="margin: 20px 0;">
+          <p style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 8px; text-transform: uppercase;">
+            Or Select Pre-Curated Sample Photo:
+          </p>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button class="btn-secondary" style="font-size: 0.78rem; padding: 6px 12px;" onclick="selectSamplePhoto('Road Dust & Sweeping Debris', 'Dry Waste', 96.8, 'Heavy accumulation of road dust. Dispatch road sweeping squad.', 'https://images.unsplash.com/photo-1599818816933-4f9d0c8d17b5?auto=format&fit=crop&w=800&q=80')">
+              🌪️ Road Dust &amp; Sweeping
+            </button>
+            <button class="btn-secondary" style="font-size: 0.78rem; padding: 6px 12px;" onclick="selectSamplePhoto('Plastic Beverage Bottles', 'Dry Waste (Recyclable)', 94.2, 'High polymer content. Divert to municipal plastic baler depot.', 'https://images.unsplash.com/photo-1605600659908-0ef719419d41?auto=format&fit=crop&w=800&q=80')">
+              🧴 Plastic Waste
+            </button>
+            <button class="btn-secondary" style="font-size: 0.78rem; padding: 6px 12px;" onclick="selectSamplePhoto('Organic Food Scraps', 'Wet Waste (Compostable)', 98.1, 'Perishable organic material. Route to biogas anaerobic digester.', 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=800&q=80')">
+              🥦 Organic Waste
+            </button>
+            <button class="btn-secondary" style="font-size: 0.78rem; padding: 6px 12px;" onclick="selectSamplePhoto('Hazardous Chemical Canister', 'Hazardous Waste', 99.4, 'Toxic chemical residue. Alert HazMat crew with protective gear.', 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=800&q=80')">
+              ☣️ Hazardous Waste
+            </button>
+          </div>
+        </div>
+
+        <!-- AI Real-Time Neural Classification Card with Voice Announcement -->
+        <div class="ai-result-badge">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 1.25rem;">🤖</span>
+              <div>
+                <h4 style="font-size: 1rem; color: #fff;">AI Multi-Spectral Neural Analysis</h4>
+                <p class="mono" style="font-size: 0.7rem; color: var(--text-secondary);">ResNet-50 Classifier + Voice Speech Synthesis Active</p>
+              </div>
+            </div>
+            <!-- Animated Equalizer Bars -->
+            <div class="voice-audio-bar" title="AI Voice Synthesizer Speaking">
+              <div class="voice-bar"></div>
+              <div class="voice-bar"></div>
+              <div class="voice-bar"></div>
+              <div class="voice-bar"></div>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 12px;">
+            <div>
+              <p style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Detected Waste Type</p>
+              <p style="font-size: 1.05rem; font-weight: 800; color: var(--emerald-400);" id="ai-predicted-label">Road Dust &amp; Sweeping Debris</p>
+            </div>
+            <div>
+              <p style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Waste Stream</p>
+              <p style="font-size: 0.95rem; font-weight: 700; color: #fff;" id="ai-predicted-stream">Dry Waste</p>
+            </div>
+            <div>
+              <p style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Model Confidence</p>
+              <p class="mono" style="font-size: 0.95rem; font-weight: 700; color: var(--cyan-400);" id="ai-predicted-confidence">96.8% Confidence</p>
+            </div>
+          </div>
+
+          <div style="font-size: 0.8rem; color: var(--text-secondary); background: rgba(0,0,0,0.3); padding: 10px 14px; border-radius: 8px;">
+            <span style="color: var(--teal-400); font-weight: bold;">📢 Disposal Advisory:</span>
+            <span id="ai-predicted-instructions">Road dust collected. Dispatch road sweeping squad.</span>
+          </div>
+        </div>
+
+        <!-- Complaint Submission Form -->
+        <form id="waste-report-form" style="margin-top: 24px;">
+          <div class="form-group">
+            <label for="report-desc">Description of Waste Pile &bull; Nearby Landmark</label>
+            <textarea id="report-desc" class="form-control" rows="3" placeholder="Describe the roadside waste (e.g. road dust accumulation near junction, blocking pedestrian path)"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="report-priority">Urgency &bull; Priority Level</label>
+            <select id="report-priority" class="form-control">
+              <option value="Medium" selected>Medium Priority (Standard road sweeping response)</option>
+              <option value="High">High Priority (Severe traffic obstruction or high dust)</option>
+              <option value="Emergency">Emergency (Hazardous chemicals or major dump)</option>
+            </select>
+          </div>
+
+          <button type="submit" class="btn-primary" style="width: 100%; padding: 16px; justify-content: center; font-size: 1rem;">
+            🚀 Register Complaint with GPS &amp; AI Classification
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- =========================================================================
+         PAGE 3: MY COMPLAINTS DIRECTORY (#view-citizen-complaints)
+         ========================================================================= -->
+    <section id="view-citizen-complaints" class="page-view">
+      <div class="glass-panel">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 14px;">
+          <div>
+            <span class="badge-tag">📋 CITIZEN RECORDS</span>
+            <h2 style="font-size: 1.8rem;">My Submitted Complaints</h2>
+          </div>
+          <button class="btn-primary" onclick="Router.navigate('citizen-report')">📸 Report New Waste</button>
+        </div>
+
+        <div class="table-responsive">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Category &amp; Description</th>
+                <th>GPS Geotag Location</th>
+                <th>Status</th>
+                <th>Squad Assigned</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="complaints-table-body">
+              <!-- Rendered by app.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================================
+         PAGE 4: COMPLAINT TRACKING TIMELINE (#view-citizen-track)
+         ========================================================================= -->
+    <section id="view-citizen-track" class="page-view">
+      <div class="glass-panel" style="max-width: 800px; margin: 0 auto;">
+        <span class="badge-tag">⏱️ REAL-TIME RESOLUTION TRACKER</span>
+        <h2 style="font-size: 1.8rem; margin: 6px 0;" id="track-complaint-id">MUM-2026-101</h2>
+        <h4 style="color: var(--emerald-400); margin-bottom: 4px;" id="track-complaint-title">Road Dust &amp; Sweeping Debris</h4>
+        <p class="mono" style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 32px;" id="track-complaint-address">42 MG Road, Ward 07, Mumbai</p>
+
+        <!-- 4-Stage Visual Progress Timeline -->
+        <div style="position: relative; padding-left: 36px; border-left: 2px solid var(--emerald-500); margin-bottom: 32px;">
+          <div style="margin-bottom: 28px; position: relative;">
+            <div style="position: absolute; left: -45px; top: 0; width: 18px; height: 18px; border-radius: 50%; background: var(--emerald-400); box-shadow: 0 0 10px var(--emerald-400);"></div>
+            <h4 style="color: #fff;">1. Citizen Photographed &amp; Geotagged</h4>
+            <p style="font-size: 0.8rem; color: var(--text-secondary);">Image captured with mobile camera. GPS auto-locked to ±4m accuracy.</p>
+          </div>
+
+          <div style="margin-bottom: 28px; position: relative;">
+            <div style="position: absolute; left: -45px; top: 0; width: 18px; height: 18px; border-radius: 50%; background: var(--emerald-400); box-shadow: 0 0 10px var(--emerald-400);"></div>
+            <h4 style="color: #fff;">2. Multi-Spectral AI Vision Classified</h4>
+            <p style="font-size: 0.8rem; color: var(--text-secondary);">Neural network detected Road Dust with 96.8% confidence. Stream: Dry Waste.</p>
+          </div>
+
+          <div style="margin-bottom: 28px; position: relative;">
+            <div style="position: absolute; left: -45px; top: 0; width: 18px; height: 18px; border-radius: 50%; background: var(--amber-400); box-shadow: 0 0 10px var(--amber-400);"></div>
+            <h4 style="color: #fff;">3. Sanitation Squad Dispatched via GPS Proximity</h4>
+            <p style="font-size: 0.8rem; color: var(--text-secondary);">Nearest squad truck (Rajesh Kumar &bull; MH-01-AB-1234) routed via Haversine distance.</p>
+          </div>
+
+          <div style="position: relative;">
+            <div style="position: absolute; left: -45px; top: 0; width: 18px; height: 18px; border-radius: 50%; background: #64748b;"></div>
+            <h4 style="color: var(--text-muted);">4. Site Cleared &amp; Photographic Proof Uploaded</h4>
+            <p style="font-size: 0.8rem; color: var(--text-muted);">Awaiting worker before/after clearance verification upload.</p>
+          </div>
+        </div>
+
+        <button class="btn-secondary" onclick="Router.navigate('citizen-complaints')">&larr; Back to Complaints</button>
+      </div>
+    </section>
+
+    <!-- =========================================================================
+         PAGE 5: SANITATION SQUAD TASKS (#view-worker-tasks)
+         ========================================================================= -->
+    <section id="view-worker-tasks" class="page-view">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 14px;">
+        <div>
+          <span class="badge-tag" style="background: rgba(245, 158, 11, 0.2); color: #fde68a;">👷 SANITATION SQUAD TERMINAL</span>
+          <h2 style="font-size: 1.8rem;">Field Cleanup Assignments</h2>
+          <p style="font-size: 0.85rem; color: var(--text-secondary);">Active route: Ward 07 Central &bull; Vehicle: MH-01-AB-1234</p>
+        </div>
+      </div>
+
+      <div id="worker-task-cards">
+        <!-- Rendered by app.js -->
+      </div>
+    </section>
+
+    <!-- =========================================================================
+         PAGE 6: MUNICIPAL COMMAND CENTER (#view-admin-dashboard)
+         ========================================================================= -->
+    <section id="view-admin-dashboard" class="page-view">
+      <div class="glass-panel" style="margin-bottom: 24px;">
+        <span class="badge-tag">🛡️ LEVEL 4 MUNICIPAL COMMAND CENTER</span>
+        <h2 style="font-size: 1.8rem; margin: 4px 0 16px;">Citywide Waste Resolution &amp; Squad Routing</h2>
+
+        <div class="metrics-grid" style="margin-top: 0; padding-top: 0; border: none;">
+          <div class="metric-item">
+            <div class="metric-num stat-total">3</div>
+            <div class="metric-label">Total Reports</div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-num stat-active" style="color: var(--amber-400);">2</div>
+            <div class="metric-label">Pending / In Progress</div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-num stat-resolved" style="color: var(--emerald-400);">1</div>
+            <div class="metric-label">Sites Cleared</div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-num" style="color: var(--cyan-400);">3</div>
+            <div class="metric-label">Active Field Squads</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Proximity Haversine Dispatch Queue -->
+      <div class="glass-panel">
+        <h3 style="font-size: 1.25rem; margin-bottom: 6px;">⚡ Automated Proximity Dispatch Engine</h3>
+        <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 20px;">
+          Municipal algorithm calculates satellite GPS Haversine distance between waste accumulation and active field sanitation trucks.
+        </p>
+
+        <div id="admin-dispatch-queue">
+          <!-- Rendered by app.js -->
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================================
+         PAGE 7: CITYWIDE SATELLITE GPS MAP (#view-admin-map)
+         ========================================================================= -->
+    <section id="view-admin-map" class="page-view">
+      <div class="glass-panel">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <span class="badge-tag">🗺️ SATELLITE GPS GIS</span>
+            <h2 style="font-size: 1.8rem;">Live City Waste Hotspots &amp; Fleet Map</h2>
+          </div>
+          <div style="display: flex; gap: 10px; font-size: 0.75rem; font-family: var(--font-mono);">
+            <span style="color: #ef4444;">&bull; Red: Pending Waste</span>
+            <span style="color: #f59e0b;">&bull; Yellow: In Progress</span>
+            <span style="color: #10b981;">&bull; Green: Resolved</span>
+            <span style="color: #3b82f6;">&bull; Blue: Squad Truck</span>
+          </div>
+        </div>
+
+        <!-- OpenStreetMap Leaflet Container -->
+        <div id="map-viewport"></div>
+      </div>
+    </section>
+
+    <!-- =========================================================================
+         PAGE 8: DEDICATED LOGIN GATE (#view-login)
+         ========================================================================= -->
+    <section id="view-login" class="page-view">
+      <div class="login-gate-box">
+        <span class="badge-tag">🔐 UNIFIED ACCESS GATE</span>
+        <h2 style="font-size: 2rem; margin: 10px 0;">Sign In &bull; Select Persona</h2>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 24px;">
+          Select your role to access your dedicated dashboard.
+        </p>
+
+        <div class="role-selector-pills">
+          <button class="role-pill-btn active" onclick="loginAs('citizen')">
+            <span style="font-size: 1.5rem;">👤</span>
+            <span>Citizen Portal</span>
+          </button>
+          <button class="role-pill-btn" onclick="loginAs('worker')">
+            <span style="font-size: 1.5rem;">👷</span>
+            <span>Sanitation Squad</span>
+          </button>
+          <button class="role-pill-btn" onclick="loginAs('admin')">
+            <span style="font-size: 1.5rem;">🛡️</span>
+            <span>Municipal Admin</span>
+          </button>
+        </div>
+
+        <button class="btn-secondary" style="margin-top: 16px;" onclick="Router.navigate('home')">&larr; Back to Home</button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Leaflet Map JS and Standalone App JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

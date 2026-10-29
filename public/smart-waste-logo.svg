@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%" fill="none">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#059669" />
+      <stop offset="50%" stop-color="#0d9488" />
+      <stop offset="100%" stop-color="#0284c7" />
+    </linearGradient>
+
+    <!-- Bin Body Gradient -->
+    <linearGradient id="bin-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#e2e8f0" />
+    </linearGradient>
+
+    <!-- Sensor Waves Gradient -->
+    <linearGradient id="pulse-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#34d399" />
+      <stop offset="100%" stop-color="#67e8f9" />
+    </linearGradient>
+
+    <!-- Eco Leaf Gradient -->
+    <linearGradient id="leaf-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4ade80" />
+      <stop offset="100%" stop-color="#10b981" />
+    </linearGradient>
+
+    <!-- Ambient Shadow Filter -->
+    <filter id="shadow-soft" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#059669" flood-opacity="0.35" />
+    </filter>
+  </defs>
+
+  <!-- Base Rounded Hex-Tile Icon Container -->
+  <rect x="8" y="8" width="104" height="104" rx="28" fill="url(#bg-grad)" filter="url(#shadow-soft)" />
+
+  <!-- Inner Soft Tech Ring -->
+  <rect x="12" y="12" width="96" height="96" rx="24" stroke="white" stroke-opacity="0.25" stroke-width="2" fill="none" />
+
+  <!-- IoT Smart Bin Receptacle Silhouette -->
+  <!-- Bin Body with rounded bottom corners -->
+  <path d="M42 50 L46 88 C46.5 92 50 95 54 95 L66 95 C70 95 73.5 92 74 88 L78 50 Z" 
+        fill="url(#bin-grad)" opacity="0.95" />
+
+  <!-- Bin Lid / Sensor Housing -->
+  <rect x="38" y="44" width="44" height="6" rx="3" fill="#ffffff" />
+  <rect x="52" y="39" width="16" height="5" rx="2.5" fill="#ffffff" opacity="0.9" />
+
+  <!-- Smart Fill Level Telemetry Bars on Bin -->
+  <line x1="50" y1="62" x2="70" y2="62" stroke="#10b981" stroke-width="3" stroke-linecap="round" />
+  <line x1="52" y1="72" x2="68" y2="72" stroke="#059669" stroke-width="3" stroke-linecap="round" />
+  <line x1="54" y1="82" x2="66" y2="82" stroke="#047857" stroke-width="3" stroke-linecap="round" />
+
+  <!-- Sensor Beacon Lens on Lid -->
+  <circle cx="60" cy="41.5" r="2" fill="#10b981" />
+
+  <!-- IoT Radar / Sensor Waves Broadcasting Upward -->
+  <!-- Wave 1 (Inner) -->
+  <path d="M52 33 C56 30 64 30 68 33" 
+        stroke="url(#pulse-grad)" stroke-width="2.5" stroke-linecap="round" fill="none" />
+  <!-- Wave 2 (Middle) -->
+  <path d="M46 27 C53 22 67 22 74 27" 
+        stroke="url(#pulse-grad)" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.85" />
+  <!-- Wave 3 (Outer) -->
+  <path d="M40 21 C51 14 69 14 80 21" 
+        stroke="url(#pulse-grad)" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.65" />
+
+  <!-- Eco Leaf / Green Loop Arc on Right Side -->
+  <path d="M74 58 C86 54 94 66 90 78 C86 89 74 88 74 88 C74 88 77 78 72 72 C68 67 74 58 74 58 Z" 
+        fill="url(#leaf-grad)" />
+  <path d="M74 88 C77 78 82 72 88 66" 
+        stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" opacity="0.6" fill="none" />
+
+  <!-- Live Status Ping Beacon (Top Right) -->
+  <circle cx="100" cy="20" r="7" fill="#10b981" />
+  <circle cx="100" cy="20" r="10" stroke="#34d399" stroke-width="2" stroke-opacity="0.8" fill="none">
+    <animate attributeName="r" values="7;13;7" dur="2s" repeatCount="indefinite"/>
+    <animate attributeName="stroke-opacity" values="0.8;0;0.8" dur="2s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="100" cy="20" r="3.5" fill="#ffffff" />
+</svg>
